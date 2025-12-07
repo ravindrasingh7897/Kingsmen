@@ -18,6 +18,25 @@ const getAllStudents = async (payload) => {
     return students;
 }
 
+const sanitizeStudentPayload = (payload) => {
+    if (!payload || typeof payload !== 'object') return payload;
+    const p = { ...payload };
+
+    if (p.roll !== undefined && p.roll !== null && p.roll !== '') {
+        const rollNum = parseInt(String(p.roll), 10);
+        if (Number.isNaN(rollNum)) {
+            throw new ApiError(400, 'Invalid roll value');
+        }
+        p.roll = rollNum;
+    } else {
+        delete p.roll;
+    }
+    if (p.section === '') p.section = null;
+    if (p.class === '') p.class = null;
+
+    return p;
+}
+
 const getStudentDetail = async (id) => {
     await checkStudentId(id);
 
@@ -33,7 +52,8 @@ const addNewStudent = async (payload) => {
     const ADD_STUDENT_AND_EMAIL_SEND_SUCCESS = "Student added and verification email sent successfully.";
     const ADD_STUDENT_AND_BUT_EMAIL_SEND_FAIL = "Student added, but failed to send verification email.";
     try {
-        const result = await addOrUpdateStudent(payload);
+    const sanitizedPayload = sanitizeStudentPayload(payload);
+    const result = await addOrUpdateStudent(sanitizedPayload);
         if (!result.status) {
             throw new ApiError(500, result.message);
         }
@@ -50,7 +70,8 @@ const addNewStudent = async (payload) => {
 }
 
 const updateStudent = async (payload) => {
-    const result = await addOrUpdateStudent(payload);
+    const sanitizedPayload = sanitizeStudentPayload(payload);
+    const result = await addOrUpdateStudent(sanitizedPayload);
     if (!result.status) {
         throw new ApiError(500, result.message);
     }
